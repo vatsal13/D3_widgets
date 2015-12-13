@@ -1,0 +1,43 @@
+vatsal=# select * from following;
+ followee | followers | col_sds 
+----------+-----------+---------
+ A        | {X,Y,C}   |       0
+ B        | {D}       |       2
+ C        | {NULL}    |       0
+ D        | {L,A}     |       3
+ X        | {NULL}    |       0
+ Y        | {NULL}    |       0
+ L        | {NULL}    |       0
+
+
+
+create function sds(followee varchar(50), followers varchar(50)[])
+returns integer 
+as $$
+arr = []
+for i in followers:
+    query = "select followers from following where followee = '%s'"
+    res = plpy.execute(query%i)
+    #p = 'Result('+i+')' + str(res[0]['followers'])
+    #plpy.info(p)
+    if len(res) == 0:
+        continue
+    for x in res[0]['followers']:
+        if x is not None:
+            arr.append(x)
+#p = 'Array'+str(arr)
+#plpy.info(p)
+return len(arr)
+$$language 
+plpythonu;
+
+vatsal=# update following 
+set col_sds = sds(followee, followers);
+
+vatsal=# insert into following(followee, followers)
+values
+('X', array[null]),
+('Y', array[null]),
+('L', array[null]);
+
+vatsal=# alter table following add column col_sds integer;

@@ -1,0 +1,41 @@
+﻿NOTES – D3.js for Scott Murray tuts :
+
+1. d3.select('some_element') -> Uses css selector for selecting first element that matches.
+2. .append('some_element') -> creates a new dom object for the element to append and appends just before the closing of the selected object (eg : juuts before </body>).
+3. .text('string') -> sets the text content of the slection on which this function is called as the string passed.
+4. d3.selectAll() -> when one needs to select more than one element.
+5. selection.data() -> used to bind data to DOM objects, so that; latter we can referannce those values to apply mapping rules.
+If selection return no reference ( no such dom objects exitsts till now, data still binds data to these empty selections, whatever the 'x' may be in selectAll('x')).
+6. selection.data().enter() -> enter() creates the place-holder Dom objects from empty selections that data was bound to when selection returned zero objects or less than the data points available.
+
+>> Example:
+d3.select("body")
+    .selectAll("p") // if empty selection then no need to specifically say 				  // 'p',could use any name.
+    .data(dataset)
+    .enter()
+    .append("p") // append then converts all the placeholders to 'p' type Dom.
+    .text("New paragraph!");
+Here as no 'p' tags exist, thus data is binded to empty selections and enter creates those data points. No. of DOM objects that are created are equal to the no. of the data points passed to data().
+
+7. Sticky data ->  the data binded to the dom objects can be accesed again we needed to make manuplations.
+As .text(function(d) { return d; });
+Any time after data() is called , an anonymous function with 'd' as parameter can be used. Data() ensures that the data binded to the dom element is only being referenced.
+8. .attr() and .style() -> used to change set HTML attributes and change CSS properties of the selection.
+
+>>Example:
+.style("color", "red");
+OR
+.style("color", function(d) {
+    if (d > 15) {   //Threshold of 15
+        return "red";
+    } else {
+        return "black";
+    }
+});
+
+
+
+
+
+
+

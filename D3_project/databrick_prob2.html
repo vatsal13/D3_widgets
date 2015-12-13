@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>D3 stacked bar chart</title>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script>
+        <style>
+            .axis path,
+            .axis line {
+                fill: none;
+                stroke: black;
+                shape-rendering: crispEdges;
+            }
+            .axis text {
+                font-family: sans-serif;
+                font-size: 11px;
+            }
+            .grid .tick {
+                stroke: black;
+            }
+        </style>
+    </head>
+    <body>
+        <script type="text/javascript">
+            
+            var padding = 30;
+            var W = 750, H= 500;
+            var w = 750 - 2*padding, h = 500 - 2*padding;
+            var tableSpace = 200 - padding;
+
+            var data = [ 
+                            {day:'M',data:[{key:'A',value:10},{key:'B', value:20},{key:'C',value:40},{key:'D',value:10},{key:'E',value:40}]},
+                            {day:'T',data:[{key:'A',value:40},{key:'B', value:10},{key:'C',value:20},{key:'D',value:5},{key:'E',value:30}]},
+                            {day:'W',data:[{key:'A',value:40},{key:'B', value:10},{key:'C',value:10},{key:'D',value:25},{key:'E',value:20}]},
+                            {day:'Th',data:[{key:'A',value:30},{key:'B', value:30},{key:'C',value:25},{key:'D',value:15},{key:'E',value:5}]},
+                            {day:'F',data:[{key:'A',value:0},{key:'B', value:35},{key:'C',value:14},{key:'D',value:25},{key:'E',value:40}]}
+                        ];
+            
+            // Find maximum value in the cumulative data - for scaling graph.
+            var maxDataVal = function() { 
+                var max = 0;
+                for (var itr_a in data) {
+                    var cumSum =0
+                    for (var itr_b in data[itr_a].data) {
+                        cumSum += data[itr_a].data[itr_b].value;
+                    };
+                    max = cumSum > max ? cumSum : max;
+                };
+                return max;
+            };
+
+            // Return cumulative data array for each row / days data. 
+            // [ (A,10), (B,20) ,(C,40), (D,10), (E,40) ] => [ (A,10,10), (B,20,30) ,(C,40,70), (D,10,80), (E,40,120) ].reverse()
+            var cumulativeData = function(d) {
+                var add = 0;
+                for (var itr in d.data) {
+                    d.data[itr].cumValue = d.data[itr].value + add;
+                    add = d.data[itr].cumValue;
+                    d.data[itr].day = d.day
+                };
+                return d.data.reverse();
+            };
+
+            // Returns the legend labels from data. [ 'A','B','C','D','E' .... and more if in data ] .
+            var legendData = function() {
+                                        arr = [];
+                                        for (var itr in data[0].data) {
+                                            arr.push(data[0].data[itr].key);
+                                        }
+                                        return arr;
+                                    };
+
+            var yScale = d3.scale.linear()
+                                .domain([0,maxDataVal()])
+                                .range([0,h])
+                                ;
+
+            var xScale = d3.scale.ordinal()
+                                .domain(["M", "T", "W", "Th", "F"])
+                                .rangeBands([0, w-tableSpace],.5,.3)
+                                ;
+
+            var color = d3.scale.category20()
+                        .domain(legendData())
+                        ;
+
+            var svg = d3.select('body')
+                        .append('svg')
+                        .attr('height', H)
+                        .attr('width', W)
+                        ;
+            
+            svg.append('text')
+                .attr('x', (w - tableSpace)/2)
+                .attr('y', padding/2)
+                .text('user activity')
+                .attr("font-family", "sans-serif")
+                .attr("font-size", "20px")
+                .attr("text-anchor", "middle")
+                .attr('transform', function(d) {return "translate("+padding+",0)";})
+                ;
+
+            var histGroup = svg.selectAll('g')
+                                .data(data)
+                                .enter()
+                                .append('g')
+                                .attr('transform', function(d,i) {
+                                    return "translate(" + padding + "," + padding + ")";
+                                })
+                                ;
+
+            var rect = histGroup.selectAll('rect')
+                                .data(function(d) {
+                                    return cumulativeData(d);
+                                } )
+                                .enter()
+                                .append('rect')
+                                .attr('class', function(d) { return d.key; })
+                                .attr('y', function(d) { return h - yScale(d.cumValue); })
+                                .attr('x', function(d) { return xScale(d.day);})
+                                .attr('height', function(d) { return yScale(d.value); })
+                                .attr('width', xScale.rangeBand())
+                                .attr('fill', function(d) { return color(d.key); })
+                                .style("stroke", 'black')
+                                .style("stroke-width", '0.7px')
+                                ;
+
+            var legend = svg.append('g')
+                            .attr('class','legend')
+                            .attr('transform', function() { return 'translate(' + (W-tableSpace) + ','+padding+')'; })
+                            ;
+            var lg_h = 10;
+            var lg_w = 30;
+            var x = 10;
+            var lg_spacing = 20;
+            var text_spacing = 40;
+            var legendRect = legend.selectAll('rect')
+                                    .data(legendData())
+                                    .enter()
+                                    .append('rect')
+                                    .attr('x', x)
+                                    .attr('y', function(d,i){ return i * lg_spacing;})
+                                    .attr('height', lg_h)
+                                    .attr('width', lg_w)
+                                    .attr('fill', function(d){ return color(d);})
+                                    .style("stroke", 'black')
+                                    .style("stroke-width", '.7')
+                                    ;
+
+            legend.selectAll('text')
+                    .data(legendData())
+                    .enter()
+                    .append('text')
+                    .text(function(d){return d;})
+                    .attr("font-family", "sans-serif")
+                    .attr("font-size", "14px")
+                    .attr('x', x + text_spacing)
+                    .attr('y', function(d,i){ return (i * lg_spacing)+10;})
+                    ;
+
+            var yAxis = d3.svg.axis()
+                                .scale(yScale.range([h,0]))
+                                .orient('left')
+                                ;
+
+            svg.append("g")
+                .attr("class", "y axis")
+                .attr('transform', 'translate(' + padding + ',' + padding + ')')
+                .call(yAxis)
+                ;
+
+            var xAxis = d3.svg.axis()
+                            .scale(xScale)
+                            .orient("bottom")
+                            ;
+
+            svg.append("g")
+                    .attr("class", "x axis")
+                    .attr('transform', 'translate(' + padding + ',' + (padding + h) + ')')
+                    .call(xAxis)
+                    ;
+
+            svg.append("g")         
+                .attr("class", "grid")
+                .attr("transform", "translate(" + padding + "," + (h + padding) + ")")
+                .call(xAxis
+                        .tickSize(-h, 0, 0)
+                        .tickFormat("")
+                )
+                .style("stroke-dasharray", ("1, 5"))
+                ;
+
+            svg.append("g")         
+                .attr("class", "grid")
+                .attr("transform", "translate(" + padding + "," + padding + ")")
+                .call(yAxis
+                        .tickSize(-(w - tableSpace), 0, 0)
+                        .tickFormat("")
+                )
+                .style("stroke-dasharray", ("1, 5"))
+                ;
+
+        </script>
+
+    </body>
+</html>

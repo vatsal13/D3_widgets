@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>D3 Test</title>
+        <script type="text/javascript" src="d3/d3.v3.js"></script>
+        <link rel="stylesheet" type="text/css" href="css/main.css">
+    </head>
+    <body>
+        <script type="text/javascript">
+            // Your beautiful D3 code will go here
+            // d3.select("body").selectAll('body').data([2,4,8,16,32]).enter().append('p').text('New Para!');
+            d3.select("body").selectAll('div').data([2,4,8,16,32,64,128]).enter().append('div').attr('class','bar').style('height',function(d){return d+'px';});
+        </script>
+        <svg width='500' height='500'>
+        <rect x='0' y='0' width='500' height='20'/>
+        <circle cx='250' cy='50' r='25'/>
+        </svg>
+
+    </body>
+</html>
